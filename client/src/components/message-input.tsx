@@ -67,8 +67,8 @@ export function MessageInput({
   };
 
   return (
-    <div className="border-t border-border p-4">
-      <div className="flex items-end gap-2">
+    <div className="border-t border-white/10 p-4 glass-dark">
+      <div className="flex items-end gap-3">
         <input
           type="file"
           id="file-input"
@@ -81,6 +81,7 @@ export function MessageInput({
           size="icon"
           variant="ghost"
           onClick={() => document.getElementById("file-input")?.click()}
+          className="h-11 w-11 text-muted-foreground hover:text-foreground hover:bg-white/10 transition-all duration-200 flex-shrink-0"
           data-testid="button-attach-file"
         >
           <Paperclip className="h-5 w-5" />
@@ -93,7 +94,7 @@ export function MessageInput({
             handleTyping();
           }}
           onKeyDown={handleKeyDown}
-          className="resize-none min-h-12 max-h-32 text-base rounded-3xl"
+          className="resize-none min-h-11 max-h-32 text-base rounded-2xl bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200"
           rows={1}
           data-testid="input-message"
         />
@@ -101,20 +102,21 @@ export function MessageInput({
           onClick={handleSend}
           disabled={!message.trim()}
           size="icon"
-          className="h-12 w-12 rounded-full flex-shrink-0"
+          className="h-11 w-11 rounded-full flex-shrink-0 gradient-primary hover-glow transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="button-send"
         >
           <Send className="h-5 w-5" />
         </Button>
       </div>
       {selectedFile && (
-        <div className="flex items-center gap-2 text-xs bg-muted p-2 rounded-lg mt-2">
-          <span className="truncate">{selectedFile.name}</span>
+        <div className="flex items-center gap-2 text-xs bg-white/5 p-2.5 rounded-xl mt-3 border border-white/10 fade-in">
+          <span className="truncate text-foreground">{selectedFile.name}</span>
           <button
             onClick={() => setSelectedFile(null)}
+            className="p-1 hover:bg-white/10 rounded-full transition-colors"
             data-testid="button-remove-file"
           >
-            <X className="h-3 w-3" />
+            <X className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
         </div>
       )}

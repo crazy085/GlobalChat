@@ -7,7 +7,7 @@ import { GroupChatArea } from "@/components/group-chat-area";
 import { NotificationsPanel } from "@/components/notifications-panel";
 import { type User, type Message, type Channel, type Reaction, type Notification } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Bell } from "lucide-react";
+import { ArrowLeft, Bell, MessageCircle, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type ViewMode = "direct" | "channels";
@@ -219,40 +219,107 @@ export default function Home() {
   const unreadNotifications = notifications.filter((n) => !n.read).length;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar - Direct Messages */}
+    <div className="flex h-screen overflow-hidden gradient-bg">
+      {/* View Mode Toggle - Desktop */}
+      <div className="hidden md:flex absolute top-4 left-1/2 -translate-x-1/2 z-10">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setViewMode("direct")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${
+              viewMode === "direct"
+                ? "gradient-primary text-white shadow-lg glow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/10"
+            }`}
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="text-sm font-medium">Direct</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setViewMode("channels")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${
+              viewMode === "channels"
+                ? "gradient-primary text-white shadow-lg glow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/10"
+            }`}
+          >
+            <Hash className="h-4 w-4" />
+            <span className="text-sm font-medium">Channels</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Sidebar */}
       <div
-        className={`${showMobileChat ? "hidden" : "flex"} md:flex w-full md:w-80 flex-col border-r border-border`}
+        className={`${showMobileChat ? "hidden" : "flex"} md:flex w-full md:w-80 flex-col border-r border-white/10 transition-all duration-300`}
       >
-        {viewMode === "direct" ? (
-          <ContactList
-            contacts={contacts}
-            selectedContact={selectedContact}
-            onContactSelect={handleContactSelect}
-            currentUsername={username || ""}
-          />
-        ) : (
-          <ChannelsList
-            channels={channels}
-            selectedChannel={selectedChannel}
-            onChannelSelect={handleChannelSelect}
-            currentUserId={userId || ""}
-            onCreateChannel={handleCreateChannel}
-          />
-        )}
+        {/* Mobile View Mode Toggle */}
+        <div className="flex md:hidden items-center justify-center p-3 border-b border-white/10">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setViewMode("direct")}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300 ${
+                viewMode === "direct"
+                  ? "gradient-primary text-white shadow-lg glow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/10"
+              }`}
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span className="text-xs font-medium">Direct</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setViewMode("channels")}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300 ${
+                viewMode === "channels"
+                  ? "gradient-primary text-white shadow-lg glow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/10"
+              }`}
+            >
+              <Hash className="h-4 w-4" />
+              <span className="text-xs font-medium">Channels</span>
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-hidden transition-opacity duration-300">
+          {viewMode === "direct" ? (
+            <ContactList
+              contacts={contacts}
+              selectedContact={selectedContact}
+              onContactSelect={handleContactSelect}
+              currentUsername={username || ""}
+            />
+          ) : (
+            <ChannelsList
+              channels={channels}
+              selectedChannel={selectedChannel}
+              onChannelSelect={handleChannelSelect}
+              currentUserId={userId || ""}
+              onCreateChannel={handleCreateChannel}
+            />
+          )}
+        </div>
       </div>
 
       {/* Main Chat Area */}
       <div
-        className={`${showMobileChat ? "flex" : "hidden"} md:flex flex-1 flex-col`}
+        className={`${showMobileChat ? "flex" : "hidden"} md:flex flex-1 flex-col transition-all duration-300`}
       >
         {/* Mobile back button */}
         {(selectedContact || selectedChannel) && showMobileChat && (
-          <div className="flex items-center justify-between p-2 border-b border-border md:hidden">
+          <div className="flex items-center justify-between p-3 border-b border-white/10 md:hidden bg-gradient-to-r from-primary/5 via-transparent to-accent/5">
             <Button
               size="icon"
               variant="ghost"
               onClick={handleBackToContacts}
+              className="h-9 w-9 text-foreground hover:bg-white/10 transition-colors"
               data-testid="button-back"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -261,55 +328,57 @@ export default function Home() {
               size="icon"
               variant="ghost"
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative"
+              className="relative h-9 w-9 text-foreground hover:bg-white/10 transition-colors"
               data-testid="button-notifications"
             >
               <Bell className="h-5 w-5" />
               {unreadNotifications > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-destructive rounded-full animate-pulse" />
               )}
             </Button>
           </div>
         )}
 
         {/* Desktop notification button */}
-        <div className="hidden md:flex items-center justify-end p-2 border-b border-border">
+        <div className="hidden md:flex items-center justify-end p-3 border-b border-white/10 bg-gradient-to-r from-transparent via-primary/5 to-accent/5">
           <Button
             size="icon"
             variant="ghost"
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative"
+            className="relative h-9 w-9 text-foreground hover:bg-white/10 hover-glow transition-all"
             data-testid="button-notifications"
           >
             <Bell className="h-5 w-5" />
             {unreadNotifications > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-destructive rounded-full animate-pulse" />
             )}
           </Button>
         </div>
 
         {/* Chat or Channel */}
-        {viewMode === "direct" ? (
-          <ChatArea
-            selectedContact={selectedContact}
-            messages={messages}
-            ws={ws}
-            currentUserId={userId || ""}
-            onlineUsers={onlineUsers}
-          />
-        ) : (
-          <GroupChatArea
-            selectedChannel={selectedChannel}
-            messages={messages}
-            ws={ws}
-            currentUserId={userId || ""}
-            currentUsername={username || ""}
-            channelMembers={channelMembers}
-            typingUsers={typingUsers}
-            reactions={reactions}
-            onAddReaction={handleAddReaction}
-          />
-        )}
+        <div className="flex-1 overflow-hidden transition-all duration-300">
+          {viewMode === "direct" ? (
+            <ChatArea
+              selectedContact={selectedContact}
+              messages={messages}
+              ws={ws}
+              currentUserId={userId || ""}
+              onlineUsers={onlineUsers}
+            />
+          ) : (
+            <GroupChatArea
+              selectedChannel={selectedChannel}
+              messages={messages}
+              ws={ws}
+              currentUserId={userId || ""}
+              currentUsername={username || ""}
+              channelMembers={channelMembers}
+              typingUsers={typingUsers}
+              reactions={reactions}
+              onAddReaction={handleAddReaction}
+            />
+          )}
+        </div>
       </div>
 
       {/* Notifications Modal */}

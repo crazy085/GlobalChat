@@ -32,8 +32,6 @@ var MemStorage = class {
   }
   updateUserLastSeen(userId) {
     this.lastSeen.set(userId, /* @__PURE__ */ new Date());
-    const user = this.users.get(userId);
-    if (user) user.lastSeen = /* @__PURE__ */ new Date();
   }
   getUserLastSeen(userId) {
     return this.lastSeen.get(userId) || null;

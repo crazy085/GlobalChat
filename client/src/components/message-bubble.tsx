@@ -12,31 +12,31 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
 
   return (
     <div
-      className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
+      className={`flex ${isOwn ? "justify-end" : "justify-start"} fade-in`}
       data-testid={`message-${message.id}`}
     >
       <div
-        className={`max-w-md px-4 py-2 rounded-2xl ${
+        className={`max-w-md px-4 py-2.5 shadow-lg ${
           isOwn
-            ? "bg-primary text-primary-foreground"
-            : "bg-card text-card-foreground border border-card-border"
+            ? "message-sent shadow-primary/20"
+            : "message-received shadow-black/20 border border-white/5"
         }`}
       >
-        <p className="text-sm break-words whitespace-pre-wrap">
+        <p className="text-sm break-words whitespace-pre-wrap leading-relaxed">
           {message.content}
         </p>
         <div
-          className={`flex items-center gap-1 mt-1 text-xs ${
-            isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+          className={`flex items-center gap-1.5 mt-1.5 text-[10px] font-medium tracking-wide ${
+            isOwn ? "text-white/70" : "text-muted-foreground"
           }`}
         >
-          <span>{formattedTime}</span>
+          <span className="uppercase">{formattedTime}</span>
           {isOwn && (
-            <span className="ml-1">
+            <span className="ml-0.5">
               {message.read ? (
-                <CheckCheck className="h-3 w-3" />
+                <CheckCheck className="h-3.5 w-3.5" />
               ) : (
-                <Check className="h-3 w-3" />
+                <Check className="h-3.5 w-3.5" />
               )}
             </span>
           )}

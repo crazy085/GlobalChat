@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Send, Paperclip, X } from "lucide-react";
+import { Send, Paperclip } from "lucide-react";
 
 interface MessageInputProps {
   ws: WebSocket | null;
@@ -19,7 +17,6 @@ export function MessageInput({
   senderName 
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleSend = () => {
     if (!message.trim() || !ws || ws.readyState !== WebSocket.OPEN) return;
@@ -39,7 +36,6 @@ export function MessageInput({
 
     ws.send(JSON.stringify(messageData));
     setMessage("");
-    setSelectedFile(null);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -67,59 +63,33 @@ export function MessageInput({
   };
 
   return (
-    <div className="border-t border-white/10 p-4 glass-dark">
+    <div className="p-4 border-t border-gray-800 bg-gray-900">
       <div className="flex items-end gap-3">
-        <input
-          type="file"
-          id="file-input"
-          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-          className="hidden"
-          accept="image/*,.pdf,.doc,.docx"
-          data-testid="input-file"
-        />
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={() => document.getElementById("file-input")?.click()}
-          className="h-11 w-11 text-muted-foreground hover:text-foreground hover:bg-white/10 transition-all duration-200 flex-shrink-0"
-          data-testid="button-attach-file"
-        >
+        <button className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
           <Paperclip className="h-5 w-5" />
-        </Button>
-        <Textarea
-          placeholder="Type a message..."
-          value={message}
-          onChange={(e) => {
-            setMessage(e.target.value);
-            handleTyping();
-          }}
-          onKeyDown={handleKeyDown}
-          className="resize-none min-h-11 max-h-32 text-base rounded-2xl bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all duration-200"
-          rows={1}
-          data-testid="input-message"
-        />
-        <Button
+        </button>
+        <div className="flex-1">
+          <textarea
+            placeholder="Type a message..."
+            value={message}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              handleTyping();
+            }}
+            onKeyDown={handleKeyDown}
+            rows={1}
+            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-2xl text-white text-sm placeholder-gray-500 resize-none focus:outline-none focus:border-purple-500 transition-colors"
+            style={{ minHeight: "44px", maxHeight: "120px" }}
+          />
+        </div>
+        <button
           onClick={handleSend}
           disabled={!message.trim()}
-          size="icon"
-          className="h-11 w-11 rounded-full flex-shrink-0 gradient-primary hover-glow transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          data-testid="button-send"
+          className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           <Send className="h-5 w-5" />
-        </Button>
+        </button>
       </div>
-      {selectedFile && (
-        <div className="flex items-center gap-2 text-xs bg-white/5 p-2.5 rounded-xl mt-3 border border-white/10 fade-in">
-          <span className="truncate text-foreground">{selectedFile.name}</span>
-          <button
-            onClick={() => setSelectedFile(null)}
-            className="p-1 hover:bg-white/10 rounded-full transition-colors"
-            data-testid="button-remove-file"
-          >
-            <X className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-        </div>
-      )}
     </div>
   );
 }

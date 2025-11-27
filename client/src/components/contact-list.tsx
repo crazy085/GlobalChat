@@ -1,15 +1,13 @@
 import { useState } from "react";
 import { type User } from "@shared/schema";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import { Search, MessageCircle, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface ContactListProps {
   contacts: User[];
   selectedContact: User | null;
   onContactSelect: (contact: User) => void;
   currentUsername: string;
+  onlineUsers?: Set<string>;
 }
 
 export function ContactList({
@@ -17,6 +15,7 @@ export function ContactList({
   selectedContact,
   onContactSelect,
   currentUsername,
+  onlineUsers = new Set(),
 }: ContactListProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -31,90 +30,84 @@ export function ContactList({
   };
 
   return (
-    <div className="flex h-full flex-col gradient-sidebar">
+    <div className="flex flex-col h-full bg-gray-900">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 p-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-11 w-11 ring-2 ring-primary/30">
-            <AvatarFallback className="gradient-primary text-white font-semibold">
+      <div className="p-4 border-b border-gray-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
               {currentUsername.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-base truncate text-foreground" data-testid="text-current-user">
-              {currentUsername}
-            </h2>
-            <p className="text-xs text-muted-foreground">Online</p>
+            </div>
+            <div>
+              <p className="font-semibold text-white">{currentUsername}</p>
+              <p className="text-xs text-green-400">Online</p>
+            </div>
           </div>
+          <button
+            onClick={handleLogout}
+            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            <LogOut className="h-5 w-5" />
+          </button>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleLogout}
-          className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors"
-          data-testid="button-logout"
-        >
-          <LogOut className="h-4 w-4" />
-        </Button>
       </div>
 
-      {/* Search Bar */}
-      <div className="p-4 border-b border-white/5">
+      {/* Search */}
+      <div className="p-3">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+          <input
+            type="text"
             placeholder="Search contacts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-10 rounded-xl bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all"
-            data-testid="input-search"
+            className="w-full h-10 pl-10 pr-4 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
           />
         </div>
       </div>
 
-      {/* Contact List */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      {/* Contacts */}
+      <div className="flex-1 overflow-y-auto">
         {filteredContacts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-8 text-center fade-in">
-            <div className="h-16 w-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-              <MessageCircle className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {searchQuery ? "No contacts found" : "No contacts available"}
+          <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+            <MessageCircle className="h-12 w-12 text-gray-600 mb-3" />
+            <p className="text-gray-400 text-sm">
+              {searchQuery ? "No contacts found" : "No contacts yet"}
             </p>
           </div>
         ) : (
           <div className="p-2 space-y-1">
-            {filteredContacts.map((contact) => (
-              <button
-                key={contact.id}
-                onClick={() => onContactSelect(contact)}
-                data-testid={`contact-${contact.id}`}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl hover-lift transition-all duration-200 ${
-                  selectedContact?.id === contact.id
-                    ? "bg-primary/20 border border-primary/30"
-                    : "hover:bg-white/5 border border-transparent"
-                }`}
-              >
-                <div className="relative">
-                  <Avatar className="h-11 w-11">
-                    <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-foreground font-semibold">
+            {filteredContacts.map((contact) => {
+              const isOnline = onlineUsers.has(contact.id);
+              return (
+                <button
+                  key={contact.id}
+                  onClick={() => onContactSelect(contact)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                    selectedContact?.id === contact.id
+                      ? "bg-purple-500/20 border border-purple-500/30"
+                      : "hover:bg-gray-800"
+                  }`}
+                >
+                  <div className="relative">
+                    <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-white font-semibold">
                       {contact.username.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-500 border-2 border-[hsl(240,10%,5%)] pulse-online" />
-                </div>
-                <div className="flex-1 text-left min-w-0">
-                  <p className="font-semibold text-base truncate text-foreground">
-                    {contact.username}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Online
-                  </p>
-                </div>
-              </button>
-            ))}
+                    </div>
+                    <div
+                      className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 ${
+                        isOnline ? "bg-green-500" : "bg-gray-500"
+                      }`}
+                    />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="font-medium text-white">{contact.username}</p>
+                    <p className="text-xs text-gray-400">
+                      {isOnline ? "Online" : "Offline"}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

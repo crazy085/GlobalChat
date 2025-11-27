@@ -1,5 +1,8 @@
 import { type User, type InsertUser, type Message, type InsertMessage, type Channel, type InsertChannel, type Reaction, type Notification } from "@shared/schema";
 import { randomUUID } from "crypto";
+import bcrypt from "bcrypt";
+
+const SALT_ROUNDS = 10;
 
 export interface IStorage {
   // User methods
@@ -43,6 +46,7 @@ export class MemStorage implements IStorage {
   private channelMembers: Map<string, Set<string>>;
   private reactions: Map<string, Reaction>;
   private notifications: Map<string, Notification>;
+  private lastSeen = new Map<string, Date>();
 
   constructor() {
     this.users = new Map();
@@ -51,6 +55,14 @@ export class MemStorage implements IStorage {
     this.channelMembers = new Map();
     this.reactions = new Map();
     this.notifications = new Map();
+  }
+
+  updateUserLastSeen(userId: string) {
+    this.lastSeen.set(userId, new Date());
+  }
+
+  getUserLastSeen(userId: string): Date | null {
+    return this.lastSeen.get(userId) || null;
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -65,14 +77,15 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id, avatar: null, status: "offline" };
+    const hashedPassword = await bcrypt.hash(insertUser.password, SALT_ROUNDS);
+    const user: User = { ...insertUser, id, password: hashedPassword, avatar: null, status: "offline" };
     this.users.set(id, user);
     return user;
   }
 
   async authenticateUser(username: string, password: string): Promise<User | null> {
     const user = await this.getUserByUsername(username);
-    if (user && user.password === password) {
+    if (user && await bcrypt.compare(password, user.password)) {
       return user;
     }
     return null;

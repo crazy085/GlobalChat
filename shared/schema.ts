@@ -58,7 +58,14 @@ export const notifications = pgTable("notifications", {
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
+  avatar: true,
+  status: true,
 });
+
+export interface UserWithStatus extends Omit<User, 'status'> {
+  status: "online" | "offline";
+  lastSeen?: Date;
+}
 
 export const loginSchema = z.object({
   username: z.string().min(1),

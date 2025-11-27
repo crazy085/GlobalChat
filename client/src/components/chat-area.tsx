@@ -10,6 +10,7 @@ interface ChatAreaProps {
   messages: Message[];
   ws: WebSocket | null;
   currentUserId: string;
+  onlineUsers?: Set<string>;
 }
 
 export function ChatArea({
@@ -17,7 +18,9 @@ export function ChatArea({
   messages,
   ws,
   currentUserId,
+  onlineUsers = new Set(),
 }: ChatAreaProps) {
+  const isOnline = selectedContact ? onlineUsers.has(selectedContact.id) : false;
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,13 +59,13 @@ export function ChatArea({
               {selectedContact.username.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-status-online border-2 border-background" />
+          <div className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-background ${isOnline ? "bg-green-500" : "bg-gray-400"}`} />
         </div>
         <div>
           <h2 className="font-semibold text-lg" data-testid="text-contact-name">
             {selectedContact.username}
           </h2>
-          <p className="text-xs text-muted-foreground">Online</p>
+          <p className="text-xs text-muted-foreground">{isOnline ? "Online" : "Offline"}</p>
         </div>
       </div>
 

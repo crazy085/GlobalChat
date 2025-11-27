@@ -295,6 +295,7 @@ export default function Home() {
             messages={messages}
             ws={ws}
             currentUserId={userId || ""}
+            onlineUsers={onlineUsers}
           />
         ) : (
           <GroupChatArea

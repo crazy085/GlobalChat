@@ -1,20 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>DirectChat - Secure Person-to-Person Messaging</title>
-    <meta name="description" content="Simple, fast, and secure direct messaging. Connect with anyone instantly through our real-time person-to-person chat platform." />
-    <meta property="og:title" content="DirectChat - Secure Person-to-Person Messaging" />
-    <meta property="og:description" content="Simple, fast, and secure direct messaging. Connect with anyone instantly through our real-time person-to-person chat platform." />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+    />
+
+    <title>GlobalChat — Futuristic Real-Time Chat</title>
+
+    <!-- SEO -->
+    <meta
+      name="description"
+      content="A futuristic real-time chat with neon UI, ultra-fast WebSockets, and a modern cyber interface. Connect instantly across the globe."
+    />
+
+    <!-- OpenGraph / Social Share -->
+    <meta property="og:title" content="GlobalChat — Futuristic Real-Time Chat" />
+    <meta
+      property="og:description"
+      content="Futuristic neon chat that connects the world instantly. Powered by WebSockets."
+    />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content="/banner.png" />
+
+    <!-- Icon -->
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Futuristic background optimization -->
+    <style>
+      html, body {
+        background: radial-gradient(circle at 20% 20%, #0a0f2a, #030511 70%, #000);
+        overflow: hidden;
+        overscroll-behavior: none;
+      }
+
+      /* Optional animated background particles */
+      .bg-grid {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+                    linear-gradient(180deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        animation: moveGrid 20s linear infinite;
+      }
+
+      @keyframes moveGrid {
+        0% {transform: translateY(0);}
+        100% {transform: translateY(-40px);}
+      }
+    </style>
   </head>
-  <body>
+
+  <body class="bg-background text-foreground font-sans antialiased">
+    <!-- Futuristic grid effect -->
+    <div class="bg-grid"></div>
+
+    <!-- React mounts here -->
     <div id="root"></div>
+
+    <!-- Main script -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

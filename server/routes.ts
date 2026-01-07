@@ -177,7 +177,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth Routes
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { username, password } = insertUserSchema.parse(req.body);
+      const parsed = insertUserSchema.safeParse(req.body);
+      if (!parsed.success) {
+        // log redacted body for debugging
+        const redacted = { ...req.body };
+        if (redacted.password) redacted.password = "[REDACTED]";
+        console.warn('Register validation failed', { body: redacted, issues: parsed.error.format() });
+        return res.status(400).json({ error: 'Invalid request', details: parsed.error.format() });
+      }
+      const { username, password } = parsed.data;
       const usernameClean = username.trim();
       if (!usernameClean) return res.status(400).json({ error: "Username required" });
       const existingUser = await storage.getUserByUsername(usernameClean);
@@ -193,13 +201,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       res.status(201).json({ user: safeUser });
     } catch (error) {
+      console.error('Register error:', error);
       res.status(400).json({ error: "Invalid request" });
     }
   });
 
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { username, password } = loginSchema.parse(req.body);
+      const parsed = loginSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const redacted = { ...req.body };
+        if (redacted.password) redacted.password = "[REDACTED]";
+        console.warn('Login validation failed', { body: redacted, issues: parsed.error.format() });
+        return res.status(400).json({ error: 'Invalid request', details: parsed.error.format() });
+      }
+      const { username, password } = parsed.data;
       const usernameClean = username.trim();
       if (!usernameClean) return res.status(400).json({ error: "Username required" });
       const user = await storage.authenticateUser(usernameClean, password);
@@ -214,6 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       res.json({ user: safeUser });
     } catch (error) {
+      console.error('Login error:', error);
       res.status(400).json({ error: "Invalid request" });
     }
   });

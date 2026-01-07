@@ -36,6 +36,8 @@ export interface IStorage {
   createNotification(notification: Omit<Notification, 'id' | 'createdAt'>): Promise<Notification>;
   getNotifications(userId: string): Promise<Notification[]>;
   markNotificationAsRead(notificationId: string): Promise<void>;
+  // Clear in-memory storage (no-op for persistent DB storage)
+  clearAll(): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -132,6 +134,15 @@ export class MemStorage implements IStorage {
   async createNotification(notification: Omit<Notification, 'id' | 'createdAt'>): Promise<Notification> { const id = randomUUID(); const newNotif: Notification = { ...notification, id, createdAt: new Date() } as unknown as Notification; this.notifications.set(id, newNotif); return newNotif; }
   async getNotifications(userId: string): Promise<Notification[]> { return Array.from(this.notifications.values()).filter((n) => n.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); }
   async markNotificationAsRead(notificationId: string): Promise<void> { const notif = this.notifications.get(notificationId); if (notif) notif.read = true; }
+
+  async clearAll(): Promise<void> {
+    this.users.clear();
+    this.messages.clear();
+    this.channels.clear();
+    this.channelMembers.clear();
+    this.reactions.clear();
+    this.notifications.clear();
+  }
 }
 
 export class PgStorage implements IStorage {
@@ -264,6 +275,12 @@ export class PgStorage implements IStorage {
   async getNotifications(userId: string): Promise<Notification[]> { const res = await this.pool.query(`SELECT * FROM notifications WHERE user_id=$1 ORDER BY created_at DESC`, [userId]); return res.rows as Notification[]; }
 
   async markNotificationAsRead(notificationId: string): Promise<void> { await this.pool.query(`UPDATE notifications SET read=true WHERE id=$1`, [notificationId]); }
+
+  // For Postgres storage we do not clear DB via this method to avoid accidental data loss.
+  async clearAll(): Promise<void> {
+    // no-op when using Postgres; use migrations or admin tools for DB wipes
+    return Promise.resolve();
+  }
 }
 
 // Export storage: prefer Postgres when DATABASE_URL is set, otherwise fall back to in-memory

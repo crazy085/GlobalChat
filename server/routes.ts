@@ -329,6 +329,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug: clear in-memory storage (safe no-op for Postgres-backed storage)
+  app.post('/api/debug/clear-memory', async (_req, res) => {
+    try {
+      await storage.clearAll();
+      res.json({ success: true, cleared: true });
+    } catch (err) {
+      res.status(500).json({ success: false, error: 'Failed to clear memory' });
+    }
+  });
+
   // Notification Routes
   app.get("/api/notifications", async (req, res) => {
     try {

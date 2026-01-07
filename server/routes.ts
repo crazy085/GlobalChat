@@ -18,12 +18,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const message = JSON.parse(data.toString());
 
         if (message.type === "auth") {
-          userId = message.userId;
-          if (userId) {
-            clients.set(userId, ws);
-            await storage.updateUserStatus(userId, "online");
-            broadcast({ type: "userStatus", userId, status: "online" }, userId);
-          }
+            userId = message.userId;
+            if (userId) {
+              const user = await storage.getUser(userId);
+              if (!user) {
+                ws.send(JSON.stringify({ type: "error", message: "Invalid auth" }));
+                ws.close();
+                return;
+              }
+              clients.set(userId, ws);
+              await storage.updateUserStatus(userId, "online");
+              broadcast({ type: "userStatus", userId, status: "online" }, userId);
+            }
         } else if (message.type === "message") {
           const validatedMessage = insertMessageSchema.parse({
             senderId: message.senderId,
@@ -172,12 +178,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/register", async (req, res) => {
     try {
       const { username, password } = insertUserSchema.parse(req.body);
-      const existingUser = await storage.getUserByUsername(username);
+      const usernameClean = username.trim();
+      if (!usernameClean) return res.status(400).json({ error: "Username required" });
+      const existingUser = await storage.getUserByUsername(usernameClean);
       if (existingUser) {
         return res.status(400).json({ error: "Username already taken" });
       }
-      const user = await storage.createUser({ username, password });
-      res.json({ user });
+      const user = await storage.createUser({ username: usernameClean, password });
+      const safeUser = {
+        id: user.id,
+        username: user.username,
+        avatar: user.avatar ?? null,
+        status: user.status ?? "offline",
+      };
+      res.status(201).json({ user: safeUser });
     } catch (error) {
       res.status(400).json({ error: "Invalid request" });
     }
@@ -186,11 +200,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password } = loginSchema.parse(req.body);
-      const user = await storage.authenticateUser(username, password);
+      const usernameClean = username.trim();
+      if (!usernameClean) return res.status(400).json({ error: "Username required" });
+      const user = await storage.authenticateUser(usernameClean, password);
       if (!user) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
-      res.json({ user });
+      const safeUser = {
+        id: user.id,
+        username: user.username,
+        avatar: user.avatar ?? null,
+        status: user.status ?? "offline",
+      };
+      res.json({ user: safeUser });
     } catch (error) {
       res.status(400).json({ error: "Invalid request" });
     }

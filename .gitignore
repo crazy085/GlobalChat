@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+/.vite
+/.idea
+.DS_Store
+npm-debug.log
+package-lock.jsonnode_modules

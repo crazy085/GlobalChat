@@ -50,7 +50,21 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        let safeResponse: any = capturedJsonResponse;
+        try {
+          // copy to avoid mutating original
+          safeResponse = JSON.parse(JSON.stringify(capturedJsonResponse));
+          if (safeResponse && typeof safeResponse === "object") {
+            // remove likely sensitive fields
+            delete safeResponse.password;
+            if (safeResponse.user && typeof safeResponse.user === "object") {
+              delete safeResponse.user.password;
+            }
+          }
+        } catch {
+          // ignore cloning errors
+        }
+        logLine += ` :: ${JSON.stringify(safeResponse)}`;
       }
 
       if (logLine.length > 80) {

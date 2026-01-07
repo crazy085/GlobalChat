@@ -31,9 +31,13 @@ export default function Login() {
       });
 
       if (response.ok) {
-        const { user } = await response.json();
-        localStorage.setItem("userId", user.id);
-        localStorage.setItem("username", user.username);
+        const body = await response.json();
+        const user = body?.user;
+        if (!user || !user.id || !user.username) {
+          throw new Error("Invalid server response");
+        }
+        localStorage.setItem("userId", String(user.id));
+        localStorage.setItem("username", String(user.username));
         setLocation("/");
       } else {
         const { error } = await response.json();

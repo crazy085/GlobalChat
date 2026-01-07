@@ -1,7 +1,8 @@
 import { type User, type InsertUser, type Message, type InsertMessage, type Channel, type InsertChannel, type Reaction, type Notification } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
-import { Pool } from "pg";
+import pkg from "pg";
+const { Pool } = pkg as any;
 
 export interface IStorage {
   // User methods

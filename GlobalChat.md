@@ -30,7 +30,7 @@ Preferred communication style: Simple, everyday language.
 - Local state for UI interactions using React hooks
 - Server state managed through React Query with disabled automatic refetching
 - WebSocket connection state maintained in component-level state
-- localStorage for persisting user authentication (userId and username)
+- Authentication now uses httpOnly JWT cookie (server-issued); client avoids persisting tokens in localStorage
 
 **Real-time Communication**
 - WebSocket client connection for bidirectional messaging
@@ -71,7 +71,7 @@ Preferred communication style: Simple, everyday language.
 1. **Users Table**
    - Primary key: UUID (auto-generated)
    - Username: unique text field
-   - Password: plain text storage (security improvement needed)
+   - Password: securely hashed with bcrypt on registration and stored safely (hashing implemented)
 
 2. **Messages Table**
    - Primary key: UUID (auto-generated)

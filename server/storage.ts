@@ -147,7 +147,8 @@ export class MemStorage implements IStorage {
 }
 
 export class PgStorage implements IStorage {
-  private pool: Pool;
+  // pg Pool type can be imported but keep as any to avoid typing issues in this codebase
+  private pool: any;
 
   constructor(connectionString: string) {
     this.pool = new Pool({ connectionString });

@@ -7,6 +7,7 @@ import { GroupChatArea } from "@/components/group-chat-area";
 import { NotificationsPanel } from "@/components/notifications-panel";
 import { type User, type Message, type Channel, type Reaction, type Notification } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
+import { getQueryFn } from "@/lib/queryClient";
 import { ArrowLeft, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -27,14 +28,19 @@ export default function Home() {
   const [channelMembers, setChannelMembers] = useState<User[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
 
-  const userId = localStorage.getItem("userId");
-  const username = localStorage.getItem("username");
+  const { data: me, isLoading: meLoading } = useQuery<{ user: { id: string; username: string } } | null>({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
 
   useEffect(() => {
-    if (!userId || !username) {
+    if (me === null) {
       setLocation("/login");
     }
-  }, [userId, username, setLocation]);
+  }, [me, setLocation]);
+
+  const userId = me?.user?.id;
+  const username = me?.user?.username;
 
   const { data: users = [] } = useQuery<User[]>({
     queryKey: ["/api/users"],
@@ -62,9 +68,6 @@ export default function Home() {
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     const socket = new WebSocket(wsUrl);
 
-    socket.onopen = () => {
-      socket.send(JSON.stringify({ type: "auth", userId }));
-    };
 
     socket.onmessage = (event) => {
       try {
@@ -153,7 +156,7 @@ export default function Home() {
 
   const loadChannelMembers = async (channelId: string) => {
     try {
-      const res = await fetch(`/api/channels/${channelId}/members`);
+      const res = await fetch(`/api/channels/${channelId}/members`, { credentials: 'include' });
       const data = await res.json();
       setChannelMembers(data);
     } catch (error) {
@@ -172,6 +175,7 @@ export default function Home() {
     try {
       const res = await fetch("/api/channels", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
@@ -206,7 +210,7 @@ export default function Home() {
 
   const handleMarkNotificationAsRead = async (notificationId: string) => {
     try {
-      await fetch(`/api/notifications/${notificationId}`, { method: "PATCH" });
+      await fetch(`/api/notifications/${notificationId}`, { method: "PATCH", credentials: 'include' });
       setNotifications((prev) =>
         prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
       );

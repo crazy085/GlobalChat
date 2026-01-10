@@ -1,8 +1,18 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import jwt from "jsonwebtoken";
 import { storage } from "./storage";
 import { insertUserSchema, loginSchema, insertMessageSchema, insertChannelSchema, insertReactionSchema } from "@shared/schema";
+
+function verifyToken(token?: string) {
+  if (!token || !process.env.JWT_SECRET) return null;
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET) as { userId: string; username: string };
+  } catch {
+    return null;
+  }
+} 
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -10,26 +20,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const clients = new Map<string, WebSocket>();
   const typingUsers = new Map<string, Set<string>>();
 
-  wss.on("connection", (ws: WebSocket) => {
+  wss.on("connection", async (ws: WebSocket, req) => {
     let userId: string | null = null;
+
+    // Attempt to authenticate from cookie token on WebSocket upgrade
+    try {
+      const cookieHeader = (req.headers && (req.headers.cookie as string)) || "";
+      const token = cookieHeader
+        .split(";")
+        .map((s) => s.trim())
+        .find((s) => s.startsWith("token="))
+        ?.split("=")[1];
+      const payload = verifyToken(token);
+      if (payload && payload.userId) {
+        userId = payload.userId;
+        const user = await storage.getUser(userId);
+        if (!user) {
+          ws.send(JSON.stringify({ type: "error", message: "Invalid auth" }));
+          ws.close();
+          return;
+        }
+        clients.set(userId, ws);
+        await storage.updateUserStatus(userId, "online");
+        broadcast({ type: "userStatus", userId, status: "online" }, userId);
+      }
+    } catch (e) {
+      ws.send(JSON.stringify({ type: "error", message: "Invalid auth" }));
+      ws.close();
+      return;
+    }
 
     ws.on("message", async (data: Buffer) => {
       try {
         const message = JSON.parse(data.toString());
 
         if (message.type === "auth") {
-            userId = message.userId;
-            if (userId) {
-              const user = await storage.getUser(userId);
-              if (!user) {
-                ws.send(JSON.stringify({ type: "error", message: "Invalid auth" }));
-                ws.close();
-                return;
-              }
-              clients.set(userId, ws);
-              await storage.updateUserStatus(userId, "online");
-              broadcast({ type: "userStatus", userId, status: "online" }, userId);
+          if (message.token) {
+            const payload = verifyToken(message.token);
+            if (!payload || !payload.userId) {
+              ws.send(JSON.stringify({ type: "error", message: "Invalid auth" }));
+              ws.close();
+              return;
             }
+            userId = payload.userId;
+          } else {
+            userId = message.userId;
+          }
+
+          if (userId) {
+            const user = await storage.getUser(userId);
+            if (!user) {
+              ws.send(JSON.stringify({ type: "error", message: "Invalid auth" }));
+              ws.close();
+              return;
+            }
+            clients.set(userId, ws);
+            await storage.updateUserStatus(userId, "online");
+            broadcast({ type: "userStatus", userId, status: "online" }, userId);
+          }
         } else if (message.type === "message") {
           const validatedMessage = insertMessageSchema.parse({
             senderId: message.senderId,
@@ -199,6 +247,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         avatar: user.avatar ?? null,
         status: user.status ?? "offline",
       };
+      if (process.env.JWT_SECRET) {
+        const token = jwt.sign({ userId: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        res.setHeader(
+          "Set-Cookie",
+          `token=${token}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60}${process.env.NODE_ENV === "production" ? "; Secure; SameSite=None" : ""}`
+        );
+      }
       res.status(201).json({ user: safeUser });
     } catch (error) {
       console.error('Register error:', error);
@@ -228,11 +283,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         avatar: user.avatar ?? null,
         status: user.status ?? "offline",
       };
+      if (process.env.JWT_SECRET) {
+        const token = jwt.sign({ userId: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        res.setHeader(
+          "Set-Cookie",
+          `token=${token}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60}${process.env.NODE_ENV === "production" ? "; Secure; SameSite=None" : ""}`
+        );
+      }
       res.json({ user: safeUser });
     } catch (error) {
       console.error('Login error:', error);
       res.status(400).json({ error: "Invalid request" });
     }
+  });
+
+  app.get("/api/auth/me", async (req, res) => {
+    const cookie = req.headers.cookie;
+    const token = cookie?.split(";").map((s) => s.trim()).find((s) => s.startsWith("token="))?.split("=")[1];
+    const payload = verifyToken(token);
+    if (!payload) return res.status(401).json({ error: "Not authenticated" });
+    const user = await storage.getUser(payload.userId);
+    if (!user) return res.status(401).json({ error: "Not authenticated" });
+    const safeUser = {
+      id: user.id,
+      username: user.username,
+      avatar: user.avatar ?? null,
+      status: user.status ?? "offline",
+    };
+    res.json({ user: safeUser });
+  });
+
+  app.post("/api/auth/logout", (_req, res) => {
+    res.setHeader("Set-Cookie", "token=; HttpOnly; Path=/; Max-Age=0;");
+    res.json({ success: true });
   });
 
   // User Routes

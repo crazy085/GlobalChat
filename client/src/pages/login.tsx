@@ -24,6 +24,7 @@ export default function Login() {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ 
           username: username.trim(),
           password: password.trim(),
@@ -36,8 +37,7 @@ export default function Login() {
         if (!user || !user.id || !user.username) {
           throw new Error("Invalid server response");
         }
-        localStorage.setItem("userId", String(user.id));
-        localStorage.setItem("username", String(user.username));
+        // Server sets httpOnly cookie; do not persist sensitive tokens in localStorage
         setLocation("/");
       } else {
         const { error } = await response.json();

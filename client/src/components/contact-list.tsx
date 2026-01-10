@@ -25,10 +25,13 @@ export function ContactList({
     contact.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleLogout = () => {
-    localStorage.removeItem("userId");
-    localStorage.removeItem("username");
-    window.location.href = "/login";
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch (e) {
+      // ignore errors
+    }
+    window.location.href = '/login';
   };
 
   return (
